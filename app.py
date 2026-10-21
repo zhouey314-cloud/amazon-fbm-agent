@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import time
 import random
+from mock_agents import BaseLLMAgent, profit_estimate
 
 # ==========================================
 # 核心设置与页面配置
@@ -11,16 +12,6 @@ st.set_page_config(page_title="AI 跨境选品 Agent 矩阵", page_icon="📦", 
 # ==========================================
 # 模拟大模型 API 调用基类 (可替换为你的大模型接口)
 # ==========================================
-class BaseLLMAgent:
-    def __init__(self, role, model="claude-3-opus/gemini-1.5-pro"):
-        self.role = role
-        self.model = model
-
-    def call_llm(self, prompt, context=""):
-        # 实际使用时，这里替换为真实的 API 调用代码
-        time.sleep(2) # 模拟长链推理和网络延迟
-        return f"[{self.role}] 分析完成。基于输入数据，已生成核心洞察..."
-
 # ==========================================
 # Agent 1: 市场数据处理 Agent
 # ==========================================
@@ -55,9 +46,9 @@ class VOCAnalysisAgent(BaseLLMAgent):
         response = self.call_llm(prompt)
         
         pain_points = [
-            "包装简陋导致运输破损 (出现频率 32%)",
-            "实物颜色与图片存在色差 (出现频率 18%)",
-            "无详细使用说明书 (出现频率 15%)"
+            "[MOCK] 包装运输破损：固定示例，未从输入评价统计",
+            "[MOCK] 颜色差异：固定示例，未从输入评价统计",
+            "[MOCK] 缺少说明书：固定示例，未从输入评价统计"
         ]
         return pain_points
 
@@ -72,13 +63,13 @@ class DecisionGenerationAgent(BaseLLMAgent):
         st.info("🤖 [决策生成 Agent] 正在综合市场数据与 VOC，生成 FBM 选品执行方案...")
         
         # 简单模拟利润测算 (假设 FBM 运费和采购成本)
-        sourcing_cost = avg_price * 0.25
-        shipping_cost = 8.50 
-        margin = avg_price - sourcing_cost - shipping_cost - (avg_price * 0.15) # 扣除15%佣金
-        margin_rate = (margin / avg_price) * 100
+        estimate = profit_estimate(avg_price)
+        margin, margin_rate = estimate['margin'], estimate['margin_rate']
 
         report = f"""
-        ### 📊 选品决策综合报告
+        ### 📊 MOCK 固定假设演示（不是选品建议）
+
+        以下策略和成本是写在代码里的示例，未验证市场、评论、运费或实际利润。
         
         **1. 市场切入策略**
         {market_insight}
@@ -93,7 +84,7 @@ class DecisionGenerationAgent(BaseLLMAgent):
         *   预估毛利润：**${margin:.2f}** / 单
         *   预估毛利率：**{margin_rate:.1f}%**
         
-        **👉 最终结论**：该产品具备微创新空间，建议首批少量发货测试转化率。
+        **👉 演示边界**：未形成真实产品结论，不据此采购或投资。
         """
         return report
 
@@ -102,7 +93,8 @@ class DecisionGenerationAgent(BaseLLMAgent):
 # ==========================================
 def main():
     st.title("📦 智能选品与竞品分析 Agent 矩阵")
-    st.markdown("基于多 Agent 协作机制，自动化解析市场数据与买家 VOC，输出差异化打法报告。")
+    st.warning("MOCK / 历史演示：没有真实模型 API；VOC、策略和成本假设是固定示例，不是市场结论或采购建议。")
+    st.markdown("演示 CSV 汇总与界面流程；输入评论不会被真实模型分析。请仅使用合成数据。")
     st.divider()
 
     # 侧边栏：参数配置
@@ -147,13 +139,17 @@ def main():
             progress_bar.progress(66)
 
             # 步骤 3: 综合决策
-            final_report = decision_agent.generate_report(market_insight, pain_points, avg_price)
+            try:
+                final_report = decision_agent.generate_report(market_insight, pain_points, avg_price)
+            except ValueError:
+                st.error("MOCK 输入价格必须是正数且有限；未生成利润演示。")
+                st.stop()
             st.write("✅ 最终差异化方案与利润测算生成完毕")
             progress_bar.progress(100)
             status.update(label="工作流执行完毕！", state="complete", expanded=False)
 
         # 渲染最终成果
-        st.success("🎉 分析报告已就绪！")
+        st.success("MOCK 演示已生成；没有模型或真实选品验收。")
         st.markdown(final_report)
         
         with st.expander("查看提取的结构化 VOC 数据"):
